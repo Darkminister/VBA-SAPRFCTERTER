@@ -60,14 +60,14 @@ Sub Execute_RFC_Tests_Main()
     MsgBox "テストの実行が完了しました。各結果シートを確認してください。", vbInformation
 
 Cleanup:
-    ' クリーンアップとファイルの保存
+    ' クリーンアップとファイルの保存・表示
+    Application.ScreenUpdating = True ' 画面更新を再開して表示を反映させる
     If Not dataWb Is Nothing Then
         dataWb.Save
-        dataWb.Close False
+        dataWb.Activate ' ファイルを閉じずに前面に表示する
         Set dataWb = Nothing
     End If
     If Not dictAppendMode Is Nothing Then Set dictAppendMode = Nothing
-    Application.ScreenUpdating = True
 End Sub
 
 ' ====================================================================
