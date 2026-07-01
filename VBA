@@ -88,11 +88,12 @@ Private Function Connect_To_SAP() As Boolean
     ' Configシートから接続情報を取得
     Set wsConfig = dataWb.Worksheets("Config")
 
-    ' --- 接続情報 (Configシートの B4～B10 セルから取得) ---
+    ' --- 接続情報 (Configシートの B4～B8 セルから取得) ---
     sapConnection.System = CStr(wsConfig.Range("B4").Value)
     sapConnection.ApplicationServer = CStr(wsConfig.Range("B5").Value)
     sapConnection.SystemNumber = Format(wsConfig.Range("B6").Value, "00")
     sapConnection.Client = Format(wsConfig.Range("B7").Value, "000")
+    sapConnection.Language = CStr(wsConfig.Range("B8").Value)
     
     ' ユーザー名のポップアップ入力 (空欄)
     sapUser = InputBox(sapConnection.System & " 環境のユーザー名を入力してください。", "SAPユーザー名入力")
@@ -109,7 +110,6 @@ Private Function Connect_To_SAP() As Boolean
         Exit Function
     End If
     sapConnection.Password = sapPassword
-    sapConnection.Language = CStr(wsConfig.Range("B10").Value)
 
     If sapConnection.Logon(0, True) = True Then
         Connect_To_SAP = True
@@ -142,14 +142,15 @@ Private Sub Run_Test_Cases(rfcName As String, targetCases() As String)
     Dim runDate As String
     Dim runTime As String
     
-    Set sapFunctions = CreateObject("SAP.Functions")
-    sapFunctions.Connection = sapConnection
-
     ' 実行対象のケース番号一覧を取得
     Set caseList = Get_Execution_Case_List(targetCases)
     
     ' 各テストケースをループ実行
     For Each caseId In caseList
+        ' ★修正ポイント：ケースごとにSAP.Functionsを初期化し、前回のパラメータ（テーブル・構造）を完全にクリアする
+        Set sapFunctions = CreateObject("SAP.Functions")
+        sapFunctions.Connection = sapConnection
+        
         Set rfcFunc = sapFunctions.Add(rfcName)
         If rfcFunc Is Nothing Then
             MsgBox "RFCが見つかりません: " & rfcName, vbCritical
@@ -172,7 +173,9 @@ Private Sub Run_Test_Cases(rfcName As String, targetCases() As String)
             Call Write_System_Error_To_Outputs(CStr(caseId), runDate, runTime, rfcFunc.Exception)
         End If
         
+        ' オブジェクトの解放（次のループで完全に新規作成させるため）
         Set rfcFunc = Nothing
+        Set sapFunctions = Nothing
     Next caseId
 End Sub
 
@@ -186,48 +189,76 @@ Private Sub Set_RFC_Parameters(rfcFunc As Object, caseId As String)
     Dim lastRow As Long, r As Long, c As Integer, lastCol As Integer
     Dim tableRowIdx As Long
     
+    ' --- 修正：出力パラメータのリストを取得し、入力処理から除外する ---
+    Dim wsConfig As Worksheet
+    Dim outputParamsStr As String
+    Dim outArr() As String
+    Dim isOutput As Boolean
+    Dim i As Integer
+    
+    Set wsConfig = dataWb.Worksheets("Config")
+    outputParamsStr = CStr(wsConfig.Range("B3").Value)
+    If outputParamsStr <> "" Then
+        outArr = Split(outputParamsStr, ",")
+    Else
+        outArr = Split("", ",")
+    End If
+    
     For Each ws In dataWb.Worksheets
         If ws.Name <> "Config" Then
-            Set paramObj = Nothing
-            isTable = False
             
-            On Error Resume Next
-            Set paramObj = rfcFunc.exports(ws.Name)
-            If paramObj Is Nothing Then
-                Set paramObj = rfcFunc.tables(ws.Name)
-                If Not paramObj Is Nothing Then isTable = True
-            End If
-            If paramObj Is Nothing Then Set paramObj = rfcFunc.imports(ws.Name)
-            On Error GoTo 0
+            ' 現在のシートが出力シートかどうかを判定
+            isOutput = False
+            For i = 0 To UBound(outArr)
+                If UCase(Trim(outArr(i))) = UCase(ws.Name) Then
+                    isOutput = True
+                    Exit For
+                End If
+            Next i
             
-            If Not paramObj Is Nothing Then
-                lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
-                tableRowIdx = 0
+            ' ★ 出力シートではない（純粋な入力シート）場合のみ、パラメータを設定する
+            If Not isOutput Then
+                Set paramObj = Nothing
+                isTable = False
                 
-                For r = 2 To lastRow
-                    If CStr(ws.Cells(r, 1).Value) = caseId Then
-                        If isTable Then
-                            paramObj.Rows.Add
-                            tableRowIdx = tableRowIdx + 1
-                            If ws.Cells(1, 2).Value <> "" Then
-                                lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
-                                For c = 2 To lastCol
-                                    paramObj.Value(tableRowIdx, ws.Cells(1, c).Value) = CStr(ws.Cells(r, c).Value)
-                                Next c
-                            End If
-                        Else
-                            If ws.Cells(1, 2).Value = "" Then
-                                paramObj.Value = CStr(ws.Cells(r, 2).Value)
+                On Error Resume Next
+                Set paramObj = rfcFunc.exports(ws.Name)
+                If paramObj Is Nothing Then
+                    Set paramObj = rfcFunc.tables(ws.Name)
+                    If Not paramObj Is Nothing Then isTable = True
+                End If
+                If paramObj Is Nothing Then Set paramObj = rfcFunc.imports(ws.Name)
+                On Error GoTo 0
+                
+                If Not paramObj Is Nothing Then
+                    lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+                    tableRowIdx = 0
+                    
+                    For r = 2 To lastRow
+                        If CStr(ws.Cells(r, 1).Value) = caseId Then
+                            If isTable Then
+                                paramObj.Rows.Add
+                                tableRowIdx = tableRowIdx + 1
+                                If ws.Cells(1, 2).Value <> "" Then
+                                    lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+                                    For c = 2 To lastCol
+                                        paramObj.Value(tableRowIdx, ws.Cells(1, c).Value) = CStr(ws.Cells(r, c).Value)
+                                    Next c
+                                End If
                             Else
-                                lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
-                                For c = 2 To lastCol
-                                    paramObj(ws.Cells(1, c).Value) = CStr(ws.Cells(r, c).Value)
-                                Next c
+                                If ws.Cells(1, 2).Value = "" Then
+                                    paramObj.Value = CStr(ws.Cells(r, 2).Value)
+                                Else
+                                    lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+                                    For c = 2 To lastCol
+                                        paramObj(ws.Cells(1, c).Value) = CStr(ws.Cells(r, c).Value)
+                                    Next c
+                                End If
                             End If
                         End If
-                    End If
-                Next r
-            End If
+                    Next r
+                End If
+            End If ' Not isOutput の終端
         End If
     Next ws
 End Sub
