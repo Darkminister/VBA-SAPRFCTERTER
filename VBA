@@ -57,14 +57,35 @@ Sub Execute_RFC_Tests_Main()
     ' 6. SAPからの切断
     Call Disconnect_SAP
     
-    MsgBox "テストの実行が完了しました。各結果シートを確認してください。", vbInformation
-
-Cleanup:
-    ' クリーンアップとファイルの保存・表示
-    Application.ScreenUpdating = True ' 画面更新を再開して表示を反映させる
+    ' =========================================================
+    ' ★修正：メッセージを出す「前」にファイルを保存・前面表示する
+    ' =========================================================
+    Application.ScreenUpdating = True ' 画面更新を再開
     If Not dataWb Is Nothing Then
         dataWb.Save
-        dataWb.Activate ' ファイルを閉じずに前面に表示する
+        dataWb.Activate ' テストデータファイルを前面に出す
+        If dataWb.Windows.Count > 0 Then
+            dataWb.Windows(1).Visible = True
+            dataWb.Windows(1).Activate
+        End If
+    End If
+    
+    ' 前面にデータシートが出た状態で完了メッセージを表示
+    MsgBox "テストの実行が完了しました。各結果シートを確認してください。", vbInformation
+    
+    ' 正常終了時のオブジェクト解放
+    If Not dataWb Is Nothing Then Set dataWb = Nothing
+    If Not dictAppendMode Is Nothing Then Set dictAppendMode = Nothing
+    Exit Sub ' ここで処理を終了（Cleanupには行かない）
+
+Cleanup:
+    ' キャンセルやエラーで中断した場合の処理
+    Application.ScreenUpdating = True
+    If Not dataWb Is Nothing Then
+        On Error Resume Next
+        dataWb.Save
+        dataWb.Activate
+        On Error GoTo 0
         Set dataWb = Nothing
     End If
     If Not dictAppendMode Is Nothing Then Set dictAppendMode = Nothing
