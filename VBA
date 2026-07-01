@@ -74,6 +74,7 @@ End Sub
 Private Function Connect_To_SAP() As Boolean
     Dim sapFunctions As Object
     Dim wsConfig As Worksheet
+    Dim sapUser As String
     Dim sapPassword As String
     
     Connect_To_SAP = False
@@ -91,7 +92,17 @@ Private Function Connect_To_SAP() As Boolean
     ' 前ゼロが消えていても自動で補完 (SystemNumberは2桁、Clientは3桁)
     sapConnection.SystemNumber = Format(wsConfig.Range("B6").Value, "00")
     sapConnection.Client = Format(wsConfig.Range("B7").Value, "000")
-    sapConnection.User = CStr(wsConfig.Range("B8").Value)
+    
+    ' ユーザー名のポップアップ入力 (デフォルト値としてConfigのB8をセット)
+    sapUser = InputBox(sapConnection.System & " 環境のユーザー名を入力してください。", "SAPユーザー名入力", CStr(wsConfig.Range("B8").Value))
+    
+    ' キャンセルまたは未入力の場合は処理を中断
+    If sapUser = "" Then
+        MsgBox "ユーザー名の入力がキャンセルされたため、処理を中止します。", vbExclamation
+        Connect_To_SAP = False
+        Exit Function
+    End If
+    sapConnection.User = sapUser
     
     ' パスワードのポップアップ入力
     sapPassword = InputBox(sapConnection.System & " 環境のユーザー [" & sapConnection.User & "] のパスワードを入力してください。" & vbCrLf & vbCrLf & "※入力した文字は画面に表示されるため、背後に注意してください。", "SAPパスワード入力")
