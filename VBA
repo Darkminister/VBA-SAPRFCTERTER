@@ -93,8 +93,8 @@ Private Function Connect_To_SAP() As Boolean
     sapConnection.SystemNumber = Format(wsConfig.Range("B6").Value, "00")
     sapConnection.Client = Format(wsConfig.Range("B7").Value, "000")
     
-    ' ユーザー名のポップアップ入力 (デフォルト値としてConfigのB8をセット)
-    sapUser = InputBox(sapConnection.System & " 環境のユーザー名を入力してください。", "SAPユーザー名入力", CStr(wsConfig.Range("B8").Value))
+    ' ユーザー名のポップアップ入力 (デフォルト値を削除して空欄にする)
+    sapUser = InputBox(sapConnection.System & " 環境のユーザー名を入力してください。", "SAPユーザー名入力")
     
     ' キャンセルまたは未入力の場合は処理を中断
     If sapUser = "" Then
@@ -294,44 +294,73 @@ Private Sub Get_And_Write_Results(rfcFunc As Object, caseId As String, runTime A
                 On Error GoTo 0
                 
                 If isTable Then
+                    ' ==========================================
                     ' [テーブル出力]
+                    ' ==========================================
                     Dim rowCnt As Long, rIdx As Long, cIdx As Integer, fldName As String
                     rowCnt = paramObj.RowCount
                     
                     If rowCnt = 0 Then
                         Call Write_Single_Result(caseId, runTime, paramName, 0, "", "(Empty)")
                     Else
+                        Dim tableColNames As New Collection
+                        
+                        If Not wsParamDef Is Nothing And wsParamDef.Cells(1, 2).Value <> "" Then
+                            ' シートに項目名定義がある場合
+                            For cIdx = 2 To wsParamDef.Cells(1, wsParamDef.Columns.Count).End(xlToLeft).Column
+                                tableColNames.Add wsParamDef.Cells(1, cIdx).Value
+                            Next cIdx
+                        Else
+                            ' シート定義がない場合、SAPオブジェクトから全項目名を動的取得
+                            On Error Resume Next
+                            For cIdx = 1 To paramObj.Columns.Count
+                                tableColNames.Add paramObj.Columns(cIdx).Name
+                            Next cIdx
+                            On Error GoTo 0
+                        End If
+                        
+                        ' データの出力
                         For rIdx = 1 To rowCnt
-                            If Not wsParamDef Is Nothing And wsParamDef.Cells(1, 2).Value <> "" Then
-                                ' シートに項目名定義がある場合
-                                For cIdx = 2 To wsParamDef.Cells(1, wsParamDef.Columns.Count).End(xlToLeft).Column
-                                    fldName = wsParamDef.Cells(1, cIdx).Value
+                            If tableColNames.Count > 0 Then
+                                For cIdx = 1 To tableColNames.Count
+                                    fldName = tableColNames(cIdx)
                                     Call Write_Single_Result(caseId, runTime, paramName, rIdx, fldName, CStr(paramObj.Value(rIdx, fldName)))
                                 Next cIdx
                             Else
-                                ' 項目名定義がない場合は警告のみ出力（COMの制約上、動的列名取得が難しいため）
-                                Call Write_Single_Result(caseId, runTime, paramName, rIdx, "N/A", "Excelシートに項目名定義がありません")
+                                ' 項目の取得に失敗した場合のフェイルセーフ(行全体のデータ文字列を出力)
+                                Call Write_Single_Result(caseId, runTime, paramName, rIdx, "ALL_DATA", CStr(paramObj.Rows(rIdx).Value))
                             End If
                         Next rIdx
                     End If
                 Else
+                    ' ==========================================
                     ' [スカラー または 構造出力]
-                    If Not wsParamDef Is Nothing Then
-                        If wsParamDef.Cells(1, 2).Value = "" Then
-                            ' スカラー定義
-                            Call Write_Single_Result(caseId, runTime, paramName, 1, "", CStr(paramObj.Value))
-                        Else
-                            ' 構造定義
-                            For cIdx = 2 To wsParamDef.Cells(1, wsParamDef.Columns.Count).End(xlToLeft).Column
-                                fldName = wsParamDef.Cells(1, cIdx).Value
-                                Call Write_Single_Result(caseId, runTime, paramName, 1, fldName, CStr(paramObj(fldName)))
-                            Next cIdx
-                        End If
+                    ' ==========================================
+                    Dim structColNames As New Collection
+                    
+                    If Not wsParamDef Is Nothing And wsParamDef.Cells(1, 2).Value <> "" Then
+                        ' シートに項目名定義がある場合
+                        For cIdx = 2 To wsParamDef.Cells(1, wsParamDef.Columns.Count).End(xlToLeft).Column
+                            structColNames.Add wsParamDef.Cells(1, cIdx).Value
+                        Next cIdx
                     Else
-                        ' シート定義がない場合、スカラーとして取得を試みる
+                        ' シート定義がない場合、SAPオブジェクトから全項目名を動的取得
                         On Error Resume Next
-                        Call Write_Single_Result(caseId, runTime, paramName, 1, "", CStr(paramObj.Value))
+                        For cIdx = 1 To paramObj.Columns.Count
+                            structColNames.Add paramObj.Columns(cIdx).Name
+                        Next cIdx
                         On Error GoTo 0
+                    End If
+                    
+                    ' データの出力
+                    If structColNames.Count > 0 Then
+                        For cIdx = 1 To structColNames.Count
+                            fldName = structColNames(cIdx)
+                            Call Write_Single_Result(caseId, runTime, paramName, 1, fldName, CStr(paramObj(fldName)))
+                        Next cIdx
+                    Else
+                        ' スカラー項目、または項目名が取得できない構造のフェイルセーフ
+                        Call Write_Single_Result(caseId, runTime, paramName, 1, "VALUE", CStr(paramObj.Value))
                     End If
                 End If
             End If
@@ -409,28 +438,33 @@ Private Function Get_Execution_Case_List(targetCases() As String) As Collection
     Dim r As Long, lastRow As Long
     Dim caseId As String
     
-    If UBound(targetCases) >= 0 And targetCases(0) <> "" Then
-        ' 指定がある場合はそれを返す
-        Dim i As Integer
-        For i = 0 To UBound(targetCases)
-            col.Add Trim(targetCases(i))
-        Next i
-    Else
-        ' 指定がない場合は、最初のパラメータシートから一意のケース番号を抽出
-        For Each ws In dataWb.Worksheets
-            If ws.Name <> "Config" And LCase(ws.Name) <> "result" Then
-                lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
-                On Error Resume Next
-                For r = 2 To lastRow
-                    caseId = CStr(ws.Cells(r, 1).Value)
-                    If caseId <> "" Then
-                        col.Add caseId, CStr(caseId) ' Keyを指定して重複を排除
-                    End If
-                Next r
-                On Error GoTo 0
-                Exit For ' 1つのシートから取れればOK
-            End If
-        Next ws
+    If UBound(targetCases) >= 0 Then
+        If targetCases(0) <> "" Then
+            ' 指定がある場合はそれを返す
+            Dim i As Integer
+            For i = 0 To UBound(targetCases)
+                col.Add Trim(targetCases(i))
+            Next i
+            Set Get_Execution_Case_List = col
+            Exit Function
+        End If
     End If
+    
+    ' 指定がない場合は、最初のパラメータシートから一意のケース番号を抽出
+    For Each ws In dataWb.Worksheets
+        If ws.Name <> "Config" And LCase(ws.Name) <> "result" Then
+            lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+            On Error Resume Next
+            For r = 2 To lastRow
+                caseId = CStr(ws.Cells(r, 1).Value)
+                If caseId <> "" Then
+                    col.Add caseId, CStr(caseId) ' Keyを指定して重複を排除
+                End If
+            Next r
+            On Error GoTo 0
+            Exit For ' 1つのシートから取れればOK
+        End If
+    Next ws
+    
     Set Get_Execution_Case_List = col
 End Function
