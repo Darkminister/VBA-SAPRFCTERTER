@@ -73,25 +73,43 @@ End Sub
 ' ====================================================================
 Private Function Connect_To_SAP() As Boolean
     Dim sapFunctions As Object
+    Dim wsConfig As Worksheet
+    Dim sapPassword As String
+    
     Connect_To_SAP = False
     
     On Error GoTo ErrorHandler
     Set sapFunctions = CreateObject("SAP.Functions")
     Set sapConnection = sapFunctions.Connection
 
-    ' --- 接続情報 (環境に合わせて変更してください) ---
-    sapConnection.System = "DEV"
-    sapConnection.ApplicationServer = "192.168.xxx.xxx"
-    sapConnection.SystemNumber = "00"
-    sapConnection.Client = "100"
-    sapConnection.User = "YOUR_USER_ID"
-    sapConnection.Password = "YOUR_PASSWORD"
-    sapConnection.Language = "JA"
+    ' Configシートから接続情報を取得
+    Set wsConfig = dataWb.Worksheets("Config")
+
+    ' --- 接続情報 (Configシートの B4～B10 セルから取得) ---
+    sapConnection.System = CStr(wsConfig.Range("B4").Value)
+    sapConnection.ApplicationServer = CStr(wsConfig.Range("B5").Value)
+    ' 前ゼロが消えていても自動で補完 (SystemNumberは2桁、Clientは3桁)
+    sapConnection.SystemNumber = Format(wsConfig.Range("B6").Value, "00")
+    sapConnection.Client = Format(wsConfig.Range("B7").Value, "000")
+    sapConnection.User = CStr(wsConfig.Range("B8").Value)
+    
+    ' パスワードのポップアップ入力
+    sapPassword = InputBox(sapConnection.System & " 環境のユーザー [" & sapConnection.User & "] のパスワードを入力してください。" & vbCrLf & vbCrLf & "※入力した文字は画面に表示されるため、背後に注意してください。", "SAPパスワード入力")
+    
+    ' キャンセルまたは未入力の場合は処理を中断
+    If sapPassword = "" Then
+        MsgBox "パスワードの入力がキャンセルされたため、処理を中止します。", vbExclamation
+        Connect_To_SAP = False
+        Exit Function
+    End If
+    
+    sapConnection.Password = sapPassword
+    sapConnection.Language = CStr(wsConfig.Range("B10").Value)
 
     If sapConnection.Logon(0, True) = True Then
         Connect_To_SAP = True
     Else
-        MsgBox "SAPへの接続に失敗しました。", vbCritical
+        MsgBox "SAPへの接続に失敗しました。ユーザー名とパスワード、またはConfigシートの接続情報を確認してください。", vbCritical
     End If
     Exit Function
 
