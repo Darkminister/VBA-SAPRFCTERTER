@@ -304,8 +304,14 @@ Private Sub Get_And_Write_Results(rfcFunc As Object, caseId As String, runTime A
                         Call Write_Single_Result(caseId, runTime, paramName, 0, "", "(Empty)")
                     Else
                         Dim tableColNames As New Collection
+                        Dim useSheetDefTable As Boolean
                         
-                        If Not wsParamDef Is Nothing And wsParamDef.Cells(1, 2).Value <> "" Then
+                        useSheetDefTable = False
+                        If Not wsParamDef Is Nothing Then
+                            If wsParamDef.Cells(1, 2).Value <> "" Then useSheetDefTable = True
+                        End If
+                        
+                        If useSheetDefTable Then
                             ' シートに項目名定義がある場合
                             For cIdx = 2 To wsParamDef.Cells(1, wsParamDef.Columns.Count).End(xlToLeft).Column
                                 tableColNames.Add wsParamDef.Cells(1, cIdx).Value
@@ -337,8 +343,14 @@ Private Sub Get_And_Write_Results(rfcFunc As Object, caseId As String, runTime A
                     ' [スカラー または 構造出力]
                     ' ==========================================
                     Dim structColNames As New Collection
+                    Dim useSheetDefStruct As Boolean
                     
-                    If Not wsParamDef Is Nothing And wsParamDef.Cells(1, 2).Value <> "" Then
+                    useSheetDefStruct = False
+                    If Not wsParamDef Is Nothing Then
+                        If wsParamDef.Cells(1, 2).Value <> "" Then useSheetDefStruct = True
+                    End If
+                    
+                    If useSheetDefStruct Then
                         ' シートに項目名定義がある場合
                         For cIdx = 2 To wsParamDef.Cells(1, wsParamDef.Columns.Count).End(xlToLeft).Column
                             structColNames.Add wsParamDef.Cells(1, cIdx).Value
