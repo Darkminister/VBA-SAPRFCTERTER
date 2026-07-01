@@ -1,0 +1,2 @@
+# VBA-SAPRFCTERTER
+VBAでSAPrfcテスト用
