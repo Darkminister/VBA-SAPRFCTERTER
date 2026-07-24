@@ -1,0 +1,272 @@
+﻿■ 基本データ 1 (Basic Data 1)
+テーブル	項目名	内容説明	備考
+MARA	MATNR	品目コード	外部連携時、数値のみのコードの場合は前ゼロ埋め（ALPHA変換）が必要です。
+MARA	MBRSH	産業コード	
+MARA	MTART	品目タイプ	既存マスタの変更不可項目。更新時に違う値を渡すとエラーになります。
+MARA	MEINS	基本数量単位	BAPIに渡す際はISOコード連携に注意。在庫存在時は変更不可のためエラーハンドリング必須。
+MARA	MATKL	品目グループ	
+MARA	BISMT	旧品目コード	
+MARA	EXTWG	外部品目グループ	
+MARA	LABOR	研究室/設計室	
+MARA	KOSCH	製品割当	
+MARA	PRDHA	品目階層	
+MARA	MSTAE	プラント共通品目ステータス	
+MARA	MSTDE	プラント共通品目のステータス有	
+MARA	SPART	製品部門	
+MARA	GEWEI	重量単位	MEINS同様、ISOコード変換の要否に注意。
+MARA	NTGEW	正味重量	
+MARA	GROES	サイズ/寸法	
+MARA	ETIAR	ラベルタイプ	
+MARA	ETIFO	ラベル書式	
+MAKT	SPRAS1〜3	言語1〜3	日本語(J)、英語(E)などの内部書式、またはISOコード(JA, EN)でのマッピングに注意。
+MAKT	MAKTX1〜3	品目テキスト1〜3	桁数あふれ（40桁制限）による文字化けやダンプに注意。
+MARM	UMREN	単位換算係数ー変換係数分母	基本単位に対する変換レート。
+MARM	UMREZ	単位換算係数ー変換係数分子	ゼロ割りが起きない値であること。
+MARA	ZZMATLE_XTBASIC	クライアント追加項目 1〜5	BAPIのEXTENSIONIN(BAPI_TE_MARA)で連携するZ項目。
+
+■ 基本データ 2 (Basic Data 2)
+テーブル	項目名	内容説明	備考
+MARA	MAGRV	品目グループ梱包材	
+MARA	RMATP	梱包の参照品目	
+
+■ 販売: 販売組織データ 1 (Sales: Sales Org. Data 1)
+テーブル	項目名	内容説明	備考
+MVKE	VKORG	販売組織	必須キー
+MVKE	VTWEG	流通チャネル	必須キー
+MVKE	VMSTA	販売ステータス	
+MVKE	VMSTD	流通チェーン別品目ステータスの…	有効開始日。内部書式（YYYYMMDD）
+MVKE	DWERK	出荷プラント	
+MVKE	SKTOF	現金割引区分	
+MLAN	ALAND	国コード	税分類関連。ISO国コードと内部コードの不一致に注意。
+TSKM	TATYP	税カテゴリ	BAPI実装上は MLAN または専用の税構造(TAXCLASS等)にマッピングすることが多いです。
+TSKM	TAXM1	税クラス	同上
+MVKE	AUMNG	最小受注数量	
+MVKE	LFMNG	最小納入数量	
+
+■ 販売: 販売組織データ 2 (Sales: Sales Org. Data 2)
+テーブル	項目名	内容説明	備考
+MVKE	KONDM	品目価格設定グループ	
+MVKE	BONUS	取引量リベートグループ	
+MVKE	KTGRM	勘定設定グループ	
+MVKE	MTPOS	明細カテゴリグループ	販売ビュー側。
+MVKE	PMATN	価格設定参照品目	
+MVKE	PRODH	品目階層	
+MVKE	PROVG	コミッショングループ	
+MVKE	MVGR1〜5	品目グループ 1〜5	
+MVKE	PRAT1〜A	製品属性1〜10	Aは10を指します。フラグ項目。
+
+■ 販売: 一般/プラントデータ (Sales: General/Plant Data)
+テーブル	項目名	内容説明	備考
+MARA	MSTAV	流通チェーン間品目ステータス	
+MARA	MSTDV	流通チェーン間品目ステータスの…	有効開始日付。YYYYMMDDの内部書式で渡すこと。
+MARA	MTPOS_MARA	一般明細カテゴリグループ	基本データ/販売共通。
+MARA	TRAGR	輸送 GROUP	出荷処理で重要になる項目。
+MARC	MFRGR	品目運賃グループ	
+MARC	LADGR	積載 GROUP	
+MARC	MTVER	輸出/輸入品目グループ	
+
+■ 購買 (Purchasing)
+テーブル	項目名	内容説明	備考
+MARC	WERKS	プラント	必須キー。登録済みのプラントコードであること。
+MARC	EKGRP	購買グループ	
+MARA	BSTME	発注単位	MARA側の項目ですが購買画面で管理されます。
+MARC	KAUTB	自動購買発注(自動発注許可)	
+MARC	KORDB	区分: 供給元一覧必須	
+MARC	WEBAZ	入庫処理日数	
+MARC	FABKZ	JIT納入日程区分	
+MARA	EKWSL	購買許容値キー	
+MARA	XCHPF	ロット管理区分	プラントレベル(MARC)とクライアントレベル(MARA)双方あり。
+MARC	XCHPF	ロット管理区分(プラント)	同上
+MARC	ZZMATLE_XTPURCH	プラント(購買管理)追加項目 1〜3	BAPIのEXTENSIONIN(BAPI_TE_MARC)で連携するZ項目。
+
+■ MRP 1
+テーブル	項目名	内容説明	備考
+MARC	DISGR	MRP グループ	
+MARC	MAABC	ABC区分	
+MARC	DISMM	MRPタイプ	
+MARC	MINBE	発注点	
+MARC	FXHOR	計画タイムフェンス	
+MARC	LFRHY	計画サイクル	
+MARC	DISPO	MRP管理者	
+MARC	DISLS	ロットまとめ方式	
+MARC	AUSSS	組立不良(%)	
+MARC	RDPRF	丸めプロファイル	
+MARC	BSTRF	丸め数量	
+MARC	BSTMI	最小ロットサイズ	
+MARC	BSTMA	最大ロットサイズ	
+MARC	BSTFE	固定ロットサイズ	
+MARC	MABST	最大在庫レベル	
+
+■ MRP 2
+テーブル	項目名	内容説明	備考
+MARC	BESKZ	調達タイプ	
+MARC	KZECH	ロット入力	
+MARC	SOBSL	特殊調達タイプ	
+MARC	LGPRO	出庫保管場所	
+MARC	RGEKZ	バックフラッシュ	
+MARC	VSPVB	提案供給場所	
+MARC	LGFSB	外部調達保管場所	
+MARC	KZKUP	連産品	
+MARC	EPRIO	在庫決定グループ	
+MARC	SCHGT	バルク品目	
+MARC	DZEIT	内製日数	
+MARC	PLIFZ	納入予定日数	
+MARC	MRPPP	計画カレンダ	
+MARC	FHORI	日程計画余裕キー	
+MARC	EISBE	安全在庫	
+MARC	LGRAD	サービスレベル	
+MARC	EISLO	最小安全在庫	
+MARC	RWPRO	在庫日数プロファイル	
+MARC	SHFLG	安全時間区分	
+MARC	SHZET	安全時間/実績 Cov.	
+MARC	SHPRO	安全時間の期間プロファイル	
+
+■ MRP 3
+テーブル	項目名	内容説明	備考
+MARC	PERKZ	期間区分	
+MARC	PERIV	会計年度バリアント	
+MARC	AUFTL	分割区分	
+MARC	STRGR	方針グループ	
+MARC	VRMOD	消費モード	
+MARC	VINT1	逆消費期間	
+MARC	VINT2	順消費期間	
+MARC	MISKZ	二重 MRP 区分	
+MARC	WZEIT	補充リードタイム合計	
+MARC	MTVFP	利用可能在庫確認	利用可能在庫確認グループ
+MPGD	PRGRP	計画品目	
+MPGD	PRWRK	計画プラント	
+MPGD	UMREF	計画品目の変換係数	
+
+■ MRP 4
+テーブル	項目名	内容説明	備考
+MARC	TAKZT	タクトタイム	
+MARC	KZPSP	プロジェクト間品目区分	
+MARC	SBDKZ	個別/一括所要量	
+MARC	KAUSF	構成品目不良(%)	
+MARC	KZBED	所要量グループ化	
+MARC	AHDIS	MRP 従属所要量	
+MARC	KZAUS	打切区分	
+MARC	AUSDT	打切日付	日付項目。内部書式（YYYYMMDD）
+MARC	NFMAT	フォローアップ品目	
+MARC	ATPKZ	取替部品	
+MARC	ZZMATLE_XTMRP	プラント(MRPビュー)項目 1〜5	BAPIのEXTENSIONIN(BAPI_TE_MARC)で連携するZ項目。
+
+■ 作業計画 (Work Scheduling)
+テーブル	項目名	内容説明	備考
+MARC	VRVEZ	準備時間	
+MARC	VBEAZ	処理時間	
+MARC	VBAMG	出荷の能力計画のための基本数	
+MARC	FEVOR	製造責任者	
+MARC	SFCPF	製造計画プロファイル	
+MARC	RUEZT	段取時間と片付け時間	
+MARC	TRANZ	移動時間	
+MARC	BEARZ	処理時間	
+MARC	BASMG	基本数量	
+MKAL	VERID	製造バージョン	別BAPI(または別パラメータ)での連携が必要な場合があります。
+MKAL	TEXT1	製造バージョンテキスト(短)	
+MKAL	ADATU	有効開始日2	日付項目。内部書式（YYYYMMDD）
+MKAL	BDATU	有効終了日	日付項目。内部書式（YYYYMMDD）
+
+■ プラントデータ / 保管 1 (Plant Data / Storage 1)
+テーブル	項目名	内容説明	備考
+MARD	LGORT	保管場所	プラントとセットのキー項目。
+MARD	LGPBE	棚番	MARD側の固定棚番。
+MARC	MATGR	倉庫の品目グループ	
+MARA	TEMPB	温度条件	MARA項目ですが保管ビューで管理されます。
+MARA	RAUBE	保管条件	MARA項目ですが保管ビューで管理されます。
+MARA	BEHVO	容器条件	MARA項目ですが保管ビューで管理されます。
+MARA	MHDRZ	最低残存有効期間	
+MARA	MHDHB	総有効期間	
+MARA	IPRKZ	有効期間期限日の期間区分	
+MARC	MAXLZ	最長保管期間	
+MARC	LZEIH	最長保管期間の単位	
+MARC	UNETO	不足納入許容範囲リミット	
+MARC	UEETO	過剰納入許容範囲リミット	
+MARC	UEETK	過剰納入無制限許容	
+MARC	ABCIN	循環棚卸の実施棚卸区分	
+MARC	CCFIX	循環棚卸区分固定	
+MARC	WESCH	数量: 印刷予定入出庫票数	
+MARC	XMCNG	プラントにおけるマイナス在庫許	
+MARC	LOGGR	ワークロード計算のロジスティク…	
+MARC	MMSTA	プラント特有品目Stat	
+MARC	MMSTD	プラント品目ステータス有効期間	日付項目。内部書式（YYYYMMDD）
+MARC	INSMK	品質検査中在庫への転記	品質管理にも関連
+MARC	CASNR	CAS 番号 (医薬品目)	
+MARC	GPNUM	PRODCOM コード	
+MARC	ZZMATLE_XTSTRG	プラント(プラント保管)項目 1〜5	BAPIのEXTENSIONIN(BAPI_TE_MARC)で連携するZ項目。
+
+■ プラントデータ / 保管 2 (Plant Data / Storage 2)
+テーブル	項目名	内容説明	備考
+MARA	SERLV	シリアル番号の指定レベル	
+MARC	SERNP	シリアル番号プロファイル	
+
+■ 倉庫管理 1 (Warehouse Management 1)
+テーブル	項目名	内容説明	備考
+MLGN	LGNUM	倉庫番号	MLGNのキー。
+MLGN	LVSME	倉庫管理の数量単位	
+MLGN	PLKPT	概略計画および詳細計画のピッキ…	ピッキング保管域タイプ。
+MLGN	LTKZA	在庫払出に対する保管域タイプ	
+MLGN	LTKZE	在庫受入に対する保管域タイプ	
+MLGN	LGBKZ	保管区画区分	
+MLGN	BLOCK	平置保管域区分	
+MLGN	BSSKZ	倉庫管理の特殊移動区分	
+MLGN	L2SKR	ツーステップピッキング適用品目	
+MLGN	KZMBF	在庫管理への出力	
+MLGN	KZZUL	既存在庫への追加許可	
+
+■ 倉庫管理 2 (Warehouse Management 2)
+テーブル	項目名	内容説明	備考
+MLGT	LGTYP	保管域タイプ	MLGTのキー（倉庫管理2タブ用）。
+
+■ 会計 1 (Accounting 1)
+テーブル	項目名	内容説明	備考
+MBEW	BWTAR	評価タイプ	分割評価使用時のキー項目。
+MBEW	BWTTY	評価カテゴリ	
+MBEW	MLAST	価格設定(品目元帳決済管理)	
+MBEW	BKLAS	評価クラス	
+MBEW	EKLAS	VC:受注在庫	
+MBEW	QKLAS	Project 在庫 VC	
+MBEW	VPRSV	原価管理区分	S(標準) / V(移動平均) などの区分。
+MBEW	PEINH	価格単位	例：100個あたり1000円の場合の「100」。
+MBEW	STPRS	標準原価	金額項目はBAPIに渡す際、外部書式の数値そのまま渡す必要があります。
+MBEW	VERPR	移動平均原価	同上
+
+■ 会計 2 (Accounting 2)
+テーブル	項目名	内容説明	備考
+MBEW	ZKPRS	次期標準原価	金額項目。
+MBEW	ZKDAT	有効開始日付(次期標準原価)	日付項目。内部書式（YYYYMMDD）
+MBEW	BWPRH	商法評価額1	金額項目。
+MBEW	BWPH1	商法評価額2	金額項目。
+MBEW	VJBWH	商法評価額3	金額項目。
+MBEW	BWPRS	税法評価額1	金額項目。
+MBEW	BWPS1	税法評価額2	金額項目。
+MBEW	VJBWS	税法評価額3	金額項目。
+MBEW	ABWKZ	低価法, 評価減区分	
+MBEW	BWPEI	税法/商法にもとづく評価額価格単	
+MBEW	XLIFO	LIFO/FIFO関連	
+MBEW	MYPOL	LIFOプール	
+
+■ 原価計算 1 (Costing 1)
+テーブル	項目名	内容説明	備考
+MARC	NCOST	原価計算無	
+MBEW	EKALR	原価見積/QSあり	
+MARC	AWSLS	差異キー	
+MBEW	HKMAT	品目発生源	
+MBEW	HRKFT	発生源グループ	
+MBEW	KOSGR	間接費グループ	
+MARC	PRCTR	利益センタ	原価計算や販売でも使用される重要項目。
+MARC	STLAL	代替 BOM	
+MARC	STLAN	BOM 用途	
+MARC	PLNNR	タスクリストグループのキー	
+MARC	APLAL	グループカウンタ	
+MARC	PLNTY	タスクリストタイプ	
+MARC	SOBSK	特殊調達原価計算	
+MARC	LOSGR	原価計算ロットサイズ	
+MARC	FXPRU	固定価格連産品	
+
+■ 原価計算 2 (Costing 2)
+テーブル	項目名	内容説明	備考
+MBEW	ZPLPR	予定計画原価	金額項目。
+MBEW	ZPLP1〜3	予定原価 1〜3	金額項目。
+MBEW	ZPLD1〜3	予定原価 1〜3 有効開始	日付項目。内部書式（YYYYMMDD）
+
